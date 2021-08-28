@@ -7,7 +7,8 @@ import model
 
 
 @pytest.mark.functional
-def test_sth():
+def test_model_noise_run():
+    """Simple functional test, building model on noise data."""
     noise_train = np.random.uniform(low=0, high=255.,
                                     size=(10, 28, 28, 1)).astype("float32")
 
@@ -26,7 +27,7 @@ def test_sth():
     optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
 
     num_epochs = 3
-    for epoch in range(1, num_epochs + 1):
+    for _ in range(1, num_epochs + 1):
         metric = model.VAE_loss()
         for train_x in train_dataset:
             model.train_step(vautoencoder, train_x, optimizer)
