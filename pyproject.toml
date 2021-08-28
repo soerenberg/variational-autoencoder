@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fashion-vae"
+version = "0.1.0"
+description = ""
+authors = ["Soeren Berg <soeren.berg@protonmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.9"
+tensorflow = "^2.6.0"
+numpy = "~1.19"
+matplotlib = "^3.4.3"
+jupyter = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+yapf = "^0.31.0"
+flake8 = "^3.9.2"
+pylint = "^2.10.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
