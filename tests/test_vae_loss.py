@@ -16,7 +16,8 @@ import vae_loss
              reps=[4, 1]).T, np.tile(np.array([0, 1, 0, 1]), reps=[4, 1]).T,
      np.array([0, 2 * (np.exp(1) - 2), 2, 2 * (np.exp(1) - 1)])),
 ])
-def test_normal_kl_divergence(mu, log_var, dtype, decimal, expected):
+def test_kl_divergence_normal_std_normal(mu, log_var, dtype, decimal,
+                                         expected):
     result = vae_loss.kl_divergence_normal_std_normal(
         tf.constant(mu, dtype), tf.constant(log_var, dtype))
 
