@@ -28,7 +28,7 @@ def test_model_noise_run():
 
     num_epochs = 3
     for _ in range(1, num_epochs + 1):
-        metric = model.VAE_loss()
+        metric = model.MeanELBO()
         for train_x in train_dataset:
             model.train_step(vautoencoder, train_x, optimizer)
 
