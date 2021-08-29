@@ -165,7 +165,7 @@ def train_model(train_dataset, test_dataset):
     for epoch in range(1, num_epochs + 1):
         start_time = time.time()
 
-        metric = VAE_loss()
+        metric = MeanELBO()
         for train_x in train_dataset:
             train_step(model, train_x, optimizer)
 
@@ -179,7 +179,7 @@ def train_model(train_dataset, test_dataset):
             "{elapsed_time}")
 
 
-class VAE_loss(tf.keras.metrics.Metric):
+class MeanELBO(tf.keras.metrics.Metric):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.elbo = self.add_weight("elbo", initializer="zeros")
