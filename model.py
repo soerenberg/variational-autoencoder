@@ -81,7 +81,7 @@ class VariationalAutoEncoder(keras.Model):
     def _build_encoder(self):
         inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
 
-        tensor = tf.keras.layers.Rescaling(scale=1. / 255.)(inputs)
+        tensor = inputs
         for i, conf in enumerate(self._encoder_configs):
             tensor = tf.keras.layers.Conv2D(filters=conf.filter,
                                             kernel_size=conf.kernel_size,
@@ -125,7 +125,7 @@ class VariationalAutoEncoder(keras.Model):
             else:
                 tensor = tf.keras.layers.Activation("sigmoid")(tensor)
 
-        decoder_output = tf.keras.layers.Rescaling(scale=255.)(tensor)
+        decoder_output = tensor
 
         return tf.keras.models.Model(inputs, decoder_output)
 
