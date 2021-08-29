@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+import vae_loss
+
 
 class EncoderConfig(NamedTuple):
     """NamedTuple for configuring a Conv2D layer in an encoder.
@@ -122,8 +124,9 @@ class VariationalAutoEncoder(keras.Model):
                 tensor = tf.keras.layers.BatchNormalization()(tensor)
                 tensor = tf.keras.layers.LeakyReLU()(tensor)
                 tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
-            else:
-                tensor = tf.keras.layers.Activation("sigmoid")(tensor)
+
+        # Note that we did not add any activation on the end, the decoder
+        # therefore returns values on the logit scale.
 
         decoder_output = tensor
 
@@ -188,7 +191,7 @@ def compute_loss(model: VariationalAutoEncoder,
 @tf.function
 def train_step(model, tensor_batch, optimizer):
     with tf.GradientTape() as tape:
-        loss = compute_loss(model, tensor_batch)
+        loss = tf.reduce_mean(vae_loss.compute_loss(model, tensor_batch))
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -226,7 +229,7 @@ class VAE_loss(tf.keras.metrics.Metric):
     def update_state(self, model, test_x) -> None:
         self.count.assign_add(tf.ones([], tf.float32))
 
-        loss_value = compute_loss(model, test_x)
+        loss_value = tf.reduce_sum(vae_loss.compute_loss(model, test_x))
         self.elbo.assign_add(-loss_value)
 
     def result(self) -> tf.Tensor:

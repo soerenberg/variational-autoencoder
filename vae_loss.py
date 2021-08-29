@@ -20,3 +20,37 @@ def kl_divergence_normal_std_normal(mu: tf.Tensor,
     """
     return .5 * tf.reduce_sum(tf.exp(log_var) + tf.square(mu) - 1 - log_var,
                               axis=1)
+
+
+def compute_loss(model, tensor_batch: tf.Tensor) -> tf.Tensor:
+    """Compute VAE loss for a single batch.
+
+    Args:
+        model: VAE model
+        tensor_batch: batch of training data points, e.g. for 3 channel
+            pictures of size 28 x 28 this tensor will have the shape
+                (batch_size, 28, 28, 3).
+
+    Returns:
+        tf.Tensor: a scalar tensor equal to the loss of the given batch
+    """
+
+    # mean, log_var have shape (batch_size, latent_dim)
+    mean, log_var = model.encode(tensor_batch)
+
+    # add random noise
+    eps = tf.random.normal(shape=mean.shape)
+    latent_z = mean + eps * tf.exp(.5 * log_var)
+
+    # Note: x_logit has shape (batch, 28, 28, x)?
+    x_logit = model.decode(latent_z)  # Note: the decoder returns logits.
+
+    # Note: cross_ent has shape (batch, 28, 28, x)?
+    cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit,
+                                                        labels=tensor_batch)
+    # Note: summed_cross_ent has shape (batch,)
+    summed_cross_ent = tf.reduce_sum(cross_ent, axis=[1, 2, 3])
+
+    kl_divergence = kl_divergence_normal_std_normal(mean, log_var)
+
+    return kl_divergence + summed_cross_ent
