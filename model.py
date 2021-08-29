@@ -239,6 +239,12 @@ def get_datasets():
     (train_images, train_labels), (test_images,
                                    test_labels) = fashion_mnist.load_data()
 
+    train_images = train_images[..., np.newaxis] / 255.
+    test_images = test_images[..., np.newaxis] / 255.
+
+    train_images = train_images.astype("float32")
+    test_images = test_images.astype("float32")
+
     batch_size = 32
 
     # TODO test sizen
