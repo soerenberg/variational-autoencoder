@@ -152,29 +152,43 @@ def log_normal_pdf(sample, mean, logvar, raxis=1):
         axis=raxis)
 
 
-def compute_loss(model, tensor):
-    mean, log_var = model.encode(tensor)
+def compute_loss(model: VariationalAutoEncoder,
+                 tensor_batch: tf.Tensor) -> tf.Tensor:
+    """Compute VAE loss for a single batch.
+
+    Args:
+        model: VAE model
+        tensor_batch: batch of training data points, e.g. for 3 channel
+            pictures of size 28 x 28 this tensor will have the shape
+                (batch_size, 28, 28, 3).
+
+    Returns:
+        tf.Tensor: a scalar tensor equal to the loss of the given batch
+    """
+
+    # mean, log_var have shape (batch_size, latent_dim)
+    mean, log_var = model.encode(tensor_batch)
 
     # add random noise
     eps = tf.random.normal(shape=mean.shape)
-    z = mean + eps * tf.exp(.5 * log_var)
+    latent_z = mean + eps * tf.exp(.5 * log_var)
 
-    x_logit = model.decode(z)
+    x_logit = model.decode(latent_z)
 
     cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit,
-                                                        labels=tensor)
+                                                        labels=tensor_batch)
 
     logpx_z = -tf.reduce_sum(cross_ent, axis=[1, 2, 3])
-    logpz = log_normal_pdf(z, 0., 0.)
-    logqz_x = log_normal_pdf(z, mean, log_var)
+    logpz = log_normal_pdf(latent_z, 0., 0.)
+    logqz_x = log_normal_pdf(latent_z, mean, log_var)
 
     return -tf.reduce_mean(logpx_z + logpz - logqz_x)
 
 
 @tf.function
-def train_step(model, tensor, optimizer):
+def train_step(model, tensor_batch, optimizer):
     with tf.GradientTape() as tape:
-        loss = compute_loss(model, tensor)
+        loss = compute_loss(model, tensor_batch)
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
