@@ -208,7 +208,7 @@ class MeanELBO(tf.keras.metrics.Metric):
     def update_state(self, model, test_x) -> None:
         self.count.assign_add(tf.ones([], tf.float32))
 
-        loss_value = tf.reduce_sum(vae_loss.compute_loss(model, test_x))
+        loss_value = tf.reduce_mean(vae_loss.compute_loss(model, test_x))
         self.elbo.assign_add(-loss_value)
 
     def result(self) -> tf.Tensor:
