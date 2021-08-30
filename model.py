@@ -1,3 +1,4 @@
+import pathlib
 import time
 from typing import NamedTuple, Tuple
 
@@ -5,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+import checkpointing
 import vae_loss
 
 
@@ -161,13 +163,23 @@ def train_step(model, tensor_batch, optimizer):
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 
-def train_model(train_dataset, test_dataset):
-    model = VariationalAutoEncoder.from_latent_dim(latent_dim=2)
-    print(model._encoder.summary())
+def train_model(train_dataset,
+                test_dataset,
+                num_epochs,
+                latent_dim,
+                check_pt_every_n_epochs=None):
+    model = VariationalAutoEncoder.from_latent_dim(latent_dim=latent_dim)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
 
-    num_epochs = 10
+    check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
+        checkpoint_path=pathlib.Path(f"checkpoints_latent_dim_{latent_dim}"),
+        optimizer=optimizer,
+        model=model,
+        iterator=iter(train_dataset))
+
+    checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
+
     for epoch in range(1, num_epochs + 1):
         start_time = time.time()
 
@@ -175,6 +187,11 @@ def train_model(train_dataset, test_dataset):
             train_step(model, train_x, optimizer)
 
         mean_test_elbo = tf.keras.metrics.Mean()
+
+        checkpointing.write_checkpoint_if_necesssary(check_pt,
+                                                     check_pt_manager,
+                                                     check_pt_every_n_epochs)
+
         for test_x in test_dataset:
             mean_test_elbo(
                 -tf.reduce_mean(vae_loss.compute_loss(model, test_x)))

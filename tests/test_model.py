@@ -1,13 +1,17 @@
 """Tests for model.py module."""
+import pathlib
+
 import numpy as np
 import pytest
 import tensorflow as tf
 
+import checkpointing
 import model
+import vae_loss
 
 
 @pytest.mark.functional
-def test_model_noise_run():
+def test_model_noise_run(tmp_path):
     """Simple functional test, building model on noise data."""
     noise_train = np.random.uniform(low=0, high=255.,
                                     size=(10, 28, 28, 1)).astype("float32")
@@ -22,18 +26,33 @@ def test_model_noise_run():
     test_dataset = tf.data.Dataset.from_tensor_slices(noise_test).shuffle(
         len(noise_test)).batch(batch_size)
 
-    vautoencoder = model.VariationalAutoEncoder.from_latent_dim(latent_dim=2)
+    latent_dim = 2
+    vautoencoder = model.VariationalAutoEncoder.from_latent_dim(
+        latent_dim=latent_dim)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
 
+    check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
+        checkpoint_path=tmp_path,
+        optimizer=optimizer,
+        model=vautoencoder,
+        iterator=iter(train_dataset))
+
+    checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
+
     num_epochs = 3
     for _ in range(1, num_epochs + 1):
-        metric = model.MeanELBO()
+        mean_test_elbo = tf.keras.metrics.Mean()
         for train_x in train_dataset:
             model.train_step(vautoencoder, train_x, optimizer)
 
+        checkpointing.write_checkpoint_if_necesssary(check_pt,
+                                                     check_pt_manager,
+                                                     check_pt_every_n_epochs=1)
+
         for test_x in test_dataset:
-            metric.update_state(vautoencoder, test_x)
+            mean_test_elbo(
+                -tf.reduce_mean(vae_loss.compute_loss(vautoencoder, test_x)))
 
 
 class TestVariationalAutoEncoder:
