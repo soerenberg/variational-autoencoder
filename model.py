@@ -146,6 +146,26 @@ class VariationalAutoEncoder(keras.Model):
 
         return logits
 
+    @staticmethod
+    def sample_from_latent_conditional(mean: tf.Tensor,
+                                       log_var: tf.Tensor) -> tf.Tensor:
+        """Sample from the from latent space.
+
+        This method returns samples from the distribution
+            p(z | X), parametrized by `mean` and `log_var`.
+
+        Args:
+            mean: mean of the normal distribution to be sampled from.
+            log_var: log variange of the normal distribution to be sampled
+                from. Must have the same shape as `mean`.
+
+        Returns:
+            tf.Tensor: tensor of same shape as `mean` and `log_var` containing
+                samples of the specified normal distribution.
+        """
+        std_normal_samples = tf.random.normal(shape=mean.shape)
+        return mean + std_normal_samples * tf.exp(.5 * log_var)
+
 
 @tf.function
 def train_step(model, tensor_batch, optimizer):

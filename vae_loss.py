@@ -39,8 +39,7 @@ def compute_loss(model, tensor_batch: tf.Tensor) -> tf.Tensor:
     mean, log_var = model.encode(tensor_batch)
 
     # add random noise
-    eps = tf.random.normal(shape=mean.shape)
-    latent_z = mean + eps * tf.exp(.5 * log_var)
+    latent_z = model.sample_from_latent_conditional(mean, log_var)
 
     # Note: x_logit has shape (batch, 28, 28, x)?
     x_logit = model.decode(latent_z)  # Note: the decoder returns logits.
