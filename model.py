@@ -37,7 +37,7 @@ class DecoderConfig(NamedTuple):
 class VariationalAutoEncoder(keras.Model):
     """Variational Auto Encoder model."""
     def __init__(self, input_shape, encoder_configs, decoder_configs,
-                 latent_dim, learning_rate, r_loss_factor, **kwargs):
+                 latent_dim, learning_rate, **kwargs):
         super().__init__(**kwargs)
 
         self._input_shape = input_shape
@@ -45,16 +45,7 @@ class VariationalAutoEncoder(keras.Model):
         self._decoder_configs = tuple(decoder_configs)
         self._latent_dim = latent_dim
 
-        self._encoder = None
-        self._decoder = None
-        self._model = None
-
         self._learning_rate = learning_rate
-
-        self._mu = None
-        self._log_var = None
-        self._r_loss_factor = r_loss_factor
-        self._z = None
 
         self._encoder = self._build_encoder()
         self._decoder = self._build_decoder()
@@ -77,8 +68,7 @@ class VariationalAutoEncoder(keras.Model):
                        DecoderConfig(1, 3, 1)
                    ],
                    latent_dim=latent_dim,
-                   learning_rate=0.0005,
-                   r_loss_factor=1000)
+                   learning_rate=0.0005)
 
     def _build_encoder(self):
         inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
@@ -95,10 +85,6 @@ class VariationalAutoEncoder(keras.Model):
             tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
 
         tensor = tf.keras.layers.Flatten()(tensor)
-
-        self._mu = tf.keras.layers.Dense(self._latent_dim, name="mu")(tensor)
-        self._log_var = tf.keras.layers.Dense(self._latent_dim,
-                                              name="log_var")(tensor)
 
         output = tf.keras.layers.Dense(self._latent_dim +
                                        self._latent_dim)(tensor)
@@ -185,34 +171,19 @@ def train_model(train_dataset, test_dataset):
     for epoch in range(1, num_epochs + 1):
         start_time = time.time()
 
-        metric = MeanELBO()
         for train_x in train_dataset:
             train_step(model, train_x, optimizer)
 
+        mean_test_elbo = tf.keras.metrics.Mean()
         for test_x in test_dataset:
-            metric.update_state(model, test_x)
+            mean_test_elbo(
+                -tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
 
         elapsed_time = time.time() - start_time
 
-        print(
-            f"Epoch: {epoch}, test set ELBO {metric.result()}, time elapsed: "
-            "{elapsed_time}")
-
-
-class MeanELBO(tf.keras.metrics.Metric):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.elbo = self.add_weight("elbo", initializer="zeros")
-        self.count = self.add_weight("count", initializer="zeros")
-
-    def update_state(self, model, test_x) -> None:
-        self.count.assign_add(tf.ones([], tf.float32))
-
-        loss_value = tf.reduce_mean(vae_loss.compute_loss(model, test_x))
-        self.elbo.assign_add(-loss_value)
-
-    def result(self) -> tf.Tensor:
-        return self.elbo / self.count
+        print(f"Epoch: {epoch}, mean test set ELBO {mean_test_elbo.result()}, "
+              f"time elapsed: {elapsed_time}")
+    return model
 
 
 def get_datasets():
