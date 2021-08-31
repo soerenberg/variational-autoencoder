@@ -194,7 +194,6 @@ def train_model(train_dataset,
 
     checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
 
-
     train_elbo = tf.keras.metrics.Mean("train_elbo")
     test_elbo = tf.keras.metrics.Mean("test_elbo")
 
@@ -249,13 +248,9 @@ def get_datasets():
 
     batch_size = 32
 
-    # TODO test sizen
-    train_size = 100
-    test_size = 10
-
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(
-        train_size).batch(batch_size)
+        len(train_images)).batch(batch_size)
     test_dataset = tf.data.Dataset.from_tensor_slices(test_images).shuffle(
-        test_size).batch(batch_size)
+        len(test_images)).batch(batch_size)
 
     return train_dataset, test_dataset
