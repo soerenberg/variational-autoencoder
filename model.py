@@ -156,50 +156,82 @@ class VariationalAutoEncoder(keras.Model):
 
 
 @tf.function
-def train_step(model, tensor_batch, optimizer):
+def train_step(model, tensor_batch, optimizer, train_elbo):
     with tf.GradientTape() as tape:
         loss = tf.reduce_mean(vae_loss.compute_loss(model, tensor_batch))
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+    train_elbo(-loss)
 
 
 def train_model(train_dataset,
                 test_dataset,
                 num_epochs,
                 latent_dim,
+                model_dir,
                 check_pt_every_n_epochs=None):
     model = VariationalAutoEncoder.from_latent_dim(latent_dim=latent_dim)
+    model_dir = pathlib.Path(model_dir)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
+    global_step = tf.Variable(0,
+                              name="global_step",
+                              trainable=False,
+                              dtype=tf.int64)
+
+    fixed_latents = tf.Variable(tf.random.normal(shape=(10, latent_dim)),
+                                name="fixed_latents",
+                                trainable=False)
 
     check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
-        checkpoint_path=pathlib.Path(f"checkpoints_latent_dim_{latent_dim}"),
+        checkpoint_path=model_dir / "checkpoints",
         optimizer=optimizer,
         model=model,
-        iterator=iter(train_dataset))
+        iterator=iter(train_dataset),
+        fixed_latents=fixed_latents,
+        global_step=global_step)
 
     checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
+
+
+    train_elbo = tf.keras.metrics.Mean("train_elbo")
+    test_elbo = tf.keras.metrics.Mean("test_elbo")
+
+    writer = tf.summary.create_file_writer(str(model_dir / "events"))
 
     for epoch in range(1, num_epochs + 1):
         start_time = time.time()
 
         for train_x in train_dataset:
-            train_step(model, train_x, optimizer)
-
-        mean_test_elbo = tf.keras.metrics.Mean()
+            train_step(model, train_x, optimizer, train_elbo)
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
                                                      check_pt_every_n_epochs)
 
         for test_x in test_dataset:
-            mean_test_elbo(
-                -tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
+            test_elbo(-tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
 
         elapsed_time = time.time() - start_time
 
-        print(f"Epoch: {epoch}, mean test set ELBO {mean_test_elbo.result()}, "
+        with writer.as_default():
+            tf.summary.scalar("train_elbo",
+                              train_elbo.result(),
+                              step=global_step)
+            tf.summary.scalar("test_elbo",
+                              test_elbo.result(),
+                              step=global_step)
+
+            imgs = tf.nn.sigmoid(model._decoder(fixed_latents))
+            tf.summary.image("example_images",
+                             imgs,
+                             step=global_step,
+                             max_outputs=imgs.shape[0])
+
+        print(f"Epoch: {epoch}, mean test set ELBO {test_elbo.result()}, "
               f"time elapsed: {elapsed_time}")
+        global_step.assign_add(1)
     return model
 
 

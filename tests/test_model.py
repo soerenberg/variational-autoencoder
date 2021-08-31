@@ -31,27 +31,39 @@ def test_model_noise_run(tmp_path):
         latent_dim=latent_dim)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
+    global_step = tf.Variable(0,
+                              name="global_step",
+                              trainable=False,
+                              dtype=tf.int64)
+
+    fixed_latents = tf.Variable(tf.random.normal(shape=(10, latent_dim)),
+                                name="fixed_latents",
+                                trainable=False)
 
     check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
         checkpoint_path=tmp_path,
         optimizer=optimizer,
         model=vautoencoder,
-        iterator=iter(train_dataset))
+        iterator=iter(train_dataset),
+        fixed_latents=fixed_latents,
+        global_step=global_step)
 
     checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
 
+    train_elbo = tf.keras.metrics.Mean("train_elbo")
+    test_elbo = tf.keras.metrics.Mean("test_elbo")
+
     num_epochs = 3
     for _ in range(1, num_epochs + 1):
-        mean_test_elbo = tf.keras.metrics.Mean()
         for train_x in train_dataset:
-            model.train_step(vautoencoder, train_x, optimizer)
+            model.train_step(vautoencoder, train_x, optimizer, train_elbo)
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
                                                      check_pt_every_n_epochs=1)
 
         for test_x in test_dataset:
-            mean_test_elbo(
+            test_elbo(
                 -tf.reduce_mean(vae_loss.compute_loss(vautoencoder, test_x)))
 
 
