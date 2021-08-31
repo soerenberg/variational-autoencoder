@@ -202,14 +202,14 @@ def train_model(train_dataset,
     for epoch in range(1, num_epochs + 1):
         start_time = time.time()
 
-        for train_x in train_dataset:
+        for train_x, _ in train_dataset:
             train_step(model, train_x, optimizer, train_elbo)
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
                                                      check_pt_every_n_epochs)
 
-        for test_x in test_dataset:
+        for test_x, _ in test_dataset:
             test_elbo(-tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
 
         elapsed_time = time.time() - start_time
@@ -248,9 +248,10 @@ def get_datasets():
 
     batch_size = 32
 
-    train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(
-        len(train_images)).batch(batch_size)
-    test_dataset = tf.data.Dataset.from_tensor_slices(test_images).shuffle(
-        len(test_images)).batch(batch_size)
+    train_dataset = tf.data.Dataset.from_tensor_slices(
+        (train_images,
+         train_labels)).shuffle(len(train_images)).batch(batch_size)
+    test_dataset = tf.data.Dataset.from_tensor_slices(
+        (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
 
     return train_dataset, test_dataset
