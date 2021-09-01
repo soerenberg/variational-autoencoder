@@ -154,15 +154,23 @@ class VariationalAutoEncoder(keras.Model):
         std_normal_samples = tf.random.normal(shape=mean.shape)
         return mean + std_normal_samples * tf.exp(.5 * log_var)
 
+    @tf.function
+    def train_step(self, tensor_batch: tf.Tensor,
+                   optimizer: tf.keras.optimizers.Optimizer,
+                   train_elbo: tf.keras.metrics.Metric):
+        """Perform a training step / epoch.
 
-@tf.function
-def train_step(model, tensor_batch, optimizer, train_elbo):
-    with tf.GradientTape() as tape:
-        loss = tf.reduce_mean(vae_loss.compute_loss(model, tensor_batch))
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        Args:
+            tensor_batch: Batched tensor for training.
+            optimizer: optimizer to apply gradients to.
+            train_elbo: metric to collect the mean elbo of the batch.
+        """
+        with tf.GradientTape() as tape:
+            loss = tf.reduce_mean(vae_loss.compute_loss(self, tensor_batch))
+        gradients = tape.gradient(loss, self.trainable_variables)
+        optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
-    train_elbo(-loss)
+        train_elbo(-loss)
 
 
 def train_model(train_dataset,
@@ -203,7 +211,7 @@ def train_model(train_dataset,
         start_time = time.time()
 
         for train_x, _ in train_dataset:
-            train_step(model, train_x, optimizer, train_elbo)
+            model.train_step(train_x, optimizer, train_elbo)
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,

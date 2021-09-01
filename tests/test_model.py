@@ -56,7 +56,7 @@ def test_model_noise_run(tmp_path):
     num_epochs = 3
     for _ in range(1, num_epochs + 1):
         for train_x in train_dataset:
-            model.train_step(vautoencoder, train_x, optimizer, train_elbo)
+            vautoencoder.train_step(train_x, optimizer, train_elbo)
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
