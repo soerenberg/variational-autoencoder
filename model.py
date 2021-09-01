@@ -52,6 +52,16 @@ class VariationalAutoEncoder(keras.Model):
         self._encoder = self._build_encoder()
         self._decoder = self._build_decoder()
 
+    @property
+    def encoder(self) -> tf.keras.models.Model:
+        """Accessor method"""
+        return self._encoder
+
+    @property
+    def decoder(self) -> tf.keras.models.Model:
+        """Accessor method"""
+        return self._decoder
+
     @classmethod
     def from_latent_dim(cls, latent_dim):
         """Create a VAE with predefined architecture with desired latent dim.
@@ -230,7 +240,7 @@ def train_model(train_dataset,
                               test_elbo.result(),
                               step=global_step)
 
-            imgs = tf.nn.sigmoid(model._decoder(fixed_latents))
+            imgs = tf.nn.sigmoid(model.decoder(fixed_latents))
             tf.summary.image("example_images",
                              imgs,
                              step=global_step,
