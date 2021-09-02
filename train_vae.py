@@ -8,25 +8,26 @@ import numpy as np
 import tensorflow as tf
 
 import checkpointing
-import model
+import autoencoder
 import vae_loss
 
 
-def build_model(latent_dim: int) -> model.VariationalAutoEncoder:
-    return model.VariationalAutoEncoder(input_shape=(28, 28, 1),
-                                        encoder_configs=[
-                                            model.EncoderConfig(32, 3, 1),
-                                            model.EncoderConfig(64, 3, 2),
-                                            model.EncoderConfig(64, 3, 2),
-                                            model.EncoderConfig(64, 3, 1)
-                                        ],
-                                        decoder_configs=[
-                                            model.DecoderConfig(64, 3, 1),
-                                            model.DecoderConfig(64, 3, 2),
-                                            model.DecoderConfig(32, 3, 2),
-                                            model.DecoderConfig(1, 3, 1)
-                                        ],
-                                        latent_dim=latent_dim)
+def build_model(latent_dim: int) -> autoencoder.VariationalAutoEncoder:
+    return autoencoder.VariationalAutoEncoder(
+        input_shape=(28, 28, 1),
+        encoder_configs=[
+            autoencoder.EncoderConfig(32, 3, 1),
+            autoencoder.EncoderConfig(64, 3, 2),
+            autoencoder.EncoderConfig(64, 3, 2),
+            autoencoder.EncoderConfig(64, 3, 1)
+        ],
+        decoder_configs=[
+            autoencoder.DecoderConfig(64, 3, 1),
+            autoencoder.DecoderConfig(64, 3, 2),
+            autoencoder.DecoderConfig(32, 3, 2),
+            autoencoder.DecoderConfig(1, 3, 1)
+        ],
+        latent_dim=latent_dim)
 
 
 def fetch_datasets():

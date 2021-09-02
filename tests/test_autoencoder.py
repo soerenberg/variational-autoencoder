@@ -1,9 +1,9 @@
-"""Tests for model.py module."""
+"""Tests for autoencoder.py module."""
 import numpy as np
 import pytest
 import tensorflow as tf
 
-import model
+import autoencoder
 import train_vae
 
 
@@ -27,7 +27,7 @@ def test_model_noise_run(tmp_path):
         (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
 
     latent_dim = 2
-    vautoencoder = model.VariationalAutoEncoder.from_latent_dim(
+    vautoencoder = autoencoder.VariationalAutoEncoder.from_latent_dim(
         latent_dim=latent_dim)
 
     learning_rate = .0005
@@ -60,7 +60,7 @@ class TestVariationalAutoEncoder:
         """Test correctness of sample_from_latent_conditional method."""
         mocker.patch.object(tf.random, "normal", return_value=std_samples)
 
-        result = model.VariationalAutoEncoder.sample_from_latent_conditional(
+        result = autoencoder.VariationalAutoEncoder.sample_from_latent_conditional(
             tf.constant(mean, dtype), tf.constant(log_var, dtype))
 
         np.testing.assert_array_almost_equal(result.numpy(), expected)
