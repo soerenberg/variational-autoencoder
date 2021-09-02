@@ -43,6 +43,12 @@ def parse_cmd_line_args() -> argparse.Namespace:
                         type=int,
                         default=1,
                         help="Num epochs to train. Defaults to 1.")
+    parser.add_argument("--learning_rate",
+                        action="store",
+                        dest="learning_rate",
+                        type=float,
+                        default=.0005,
+                        help="Learning rate. Defaults to 0.0005.")
     parser.add_argument(
         "--verbose",
         "-v",
@@ -60,6 +66,7 @@ def run() -> None:
     model.train_model(train_dataset=train_dataset,
                       test_dataset=test_dataset,
                       num_epochs=parsed_args.num_epochs,
+                      learning_rate=parsed_args.learning_rate,
                       latent_dim=parsed_args.latent_dim,
                       model_dir=pathlib.Path(parsed_args.model_dir),
                       check_pt_every_n_epochs=1)
