@@ -183,6 +183,7 @@ class VariationalAutoEncoder(keras.Model):
 def train_model(train_dataset,
                 test_dataset,
                 num_epochs,
+                learning_rate,
                 latent_dim,
                 model_dir,
                 check_pt_every_n_epochs=None):
@@ -236,6 +237,7 @@ def train_model(train_dataset,
             tf.summary.scalar("test_elbo",
                               test_elbo.result(),
                               step=global_step)
+            tf.summary.scalar("learning_rate", learning_rate, step=global_step)
 
             imgs = tf.nn.sigmoid(model.decoder(fixed_latents))
             tf.summary.image("example_images",
