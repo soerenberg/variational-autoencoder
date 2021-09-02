@@ -39,15 +39,13 @@ class DecoderConfig(NamedTuple):
 class VariationalAutoEncoder(keras.Model):
     """Variational Auto Encoder model."""
     def __init__(self, input_shape, encoder_configs, decoder_configs,
-                 latent_dim, learning_rate, **kwargs):
+                 latent_dim, **kwargs):
         super().__init__(**kwargs)
 
         self._input_shape = input_shape
         self._encoder_configs = tuple(encoder_configs)
         self._decoder_configs = tuple(decoder_configs)
         self._latent_dim = latent_dim
-
-        self._learning_rate = learning_rate
 
         self._encoder = self._build_encoder()
         self._decoder = self._build_decoder()
@@ -79,8 +77,7 @@ class VariationalAutoEncoder(keras.Model):
                        DecoderConfig(32, 3, 2),
                        DecoderConfig(1, 3, 1)
                    ],
-                   latent_dim=latent_dim,
-                   learning_rate=0.0005)
+                   latent_dim=latent_dim)
 
     def _build_encoder(self):
         inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
