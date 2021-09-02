@@ -1,70 +1,46 @@
 """Tests for model.py module."""
-import pathlib
-
 import numpy as np
 import pytest
 import tensorflow as tf
 
-import checkpointing
 import model
-import vae_loss
+import train_vae
 
 
 @pytest.mark.functional
 def test_model_noise_run(tmp_path):
     """Simple functional test, building model on noise data."""
-    noise_train = np.random.uniform(low=0, high=255.,
-                                    size=(10, 28, 28, 1)).astype("float32")
+    train_images = np.random.uniform(low=0, high=255.,
+                                     size=(11, 28, 28, 1)).astype("float32")
+    train_labels = np.random.choice(np.arange(10), size=11)
 
-    noise_test = np.random.uniform(low=0, high=255.,
-                                   size=(10, 28, 28, 1)).astype("float32")
+    test_images = np.random.uniform(low=0, high=255.,
+                                    size=(13, 28, 28, 1)).astype("float32")
+    test_labels = np.random.choice(np.arange(10), size=13)
 
     batch_size = 2
 
-    train_dataset = tf.data.Dataset.from_tensor_slices(noise_train).shuffle(
-        len(noise_train)).batch(batch_size)
-    test_dataset = tf.data.Dataset.from_tensor_slices(noise_test).shuffle(
-        len(noise_test)).batch(batch_size)
+    train_dataset = tf.data.Dataset.from_tensor_slices(
+        (train_images,
+         train_labels)).shuffle(len(train_images)).batch(batch_size)
+    test_dataset = tf.data.Dataset.from_tensor_slices(
+        (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
 
     latent_dim = 2
     vautoencoder = model.VariationalAutoEncoder.from_latent_dim(
         latent_dim=latent_dim)
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
-    global_step = tf.Variable(0,
-                              name="global_step",
-                              trainable=False,
-                              dtype=tf.int64)
-
-    fixed_latents = tf.Variable(tf.random.normal(shape=(10, latent_dim)),
-                                name="fixed_latents",
-                                trainable=False)
-
-    check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
-        checkpoint_path=tmp_path,
-        optimizer=optimizer,
-        model=vautoencoder,
-        iterator=iter(train_dataset),
-        fixed_latents=fixed_latents,
-        global_step=global_step)
-
-    checkpointing.restore_checkpoint_if_exists(check_pt, check_pt_manager)
-
-    train_elbo = tf.keras.metrics.Mean("train_elbo")
-    test_elbo = tf.keras.metrics.Mean("test_elbo")
-
+    learning_rate = .0005
     num_epochs = 3
-    for _ in range(1, num_epochs + 1):
-        for train_x in train_dataset:
-            vautoencoder.train_step(train_x, optimizer, train_elbo)
 
-        checkpointing.write_checkpoint_if_necesssary(check_pt,
-                                                     check_pt_manager,
-                                                     check_pt_every_n_epochs=1)
-
-        for test_x in test_dataset:
-            test_elbo(
-                -tf.reduce_mean(vae_loss.compute_loss(vautoencoder, test_x)))
+    train_vae.train_model(vautoencoder,
+                          train_dataset,
+                          test_dataset,
+                          num_epochs,
+                          learning_rate,
+                          latent_dim,
+                          tmp_path,
+                          check_pt_every_n_epochs=1)
 
 
 class TestVariationalAutoEncoder:
