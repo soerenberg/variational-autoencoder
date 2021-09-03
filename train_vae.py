@@ -74,7 +74,7 @@ def train_model(model,
                 check_pt_every_n_epochs=None):
     model_dir = pathlib.Path(model_dir)
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=.0005)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     global_step = tf.Variable(0,
                               name="global_step",
                               trainable=False,
