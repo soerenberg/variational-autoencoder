@@ -4,6 +4,8 @@ import logging
 import pathlib
 import time
 
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
@@ -64,6 +66,29 @@ def write_events(writer, scalars, images, step):
                              max_outputs=values.shape[0])
 
 
+def export_images(images: tf.Tensor, image_dir: pathlib.Path,
+                  global_step: tf.Tensor) -> None:
+    """Export batch of images to separate png files.
+
+    Args:
+        images: tensorial image batch. Must have shape
+            (num batches, width, height, channels).
+        image_dir: directory to export images into.
+        global_step: global step count to be included into the image file
+            names.
+    """
+    image_dir.mkdir(parents=True, exist_ok=True)
+    for i, image in enumerate(images):
+        img_count = str(i).zfill(int(np.ceil(np.log10(len(images)))))
+        step_count = str(global_step.numpy()).zfill(8)
+        out_file = image_dir / f"image_{img_count}_step_{step_count}.png"
+
+        # for monotone images replicate the sole channel
+        if image.shape[-1] == 1:
+            image = tf.tile(image, (1, 1, 3))
+        matplotlib.image.imsave(out_file, image.numpy())
+
+
 def train_model(model,
                 train_dataset,
                 test_dataset,
@@ -122,6 +147,7 @@ def train_model(model,
                                   learning_rate=learning_rate),
                      images=dict(example_images=example_images),
                      step=global_step)
+        export_images(example_images, model_dir / "images", global_step)
 
         print(f"Epoch: {epoch}, mean test set ELBO {test_elbo.result()}, "
               f"time elapsed: {elapsed_time}")
