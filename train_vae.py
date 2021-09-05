@@ -3,6 +3,7 @@ import argparse
 import logging
 import pathlib
 import time
+from typing import Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,9 +15,12 @@ import autoencoder
 import vae_loss
 
 
-def build_model(latent_dim: int) -> autoencoder.VariationalAutoEncoder:
+def build_model(
+        latent_dim: int,
+        input_shape: Tuple[int, int,
+                           int]) -> autoencoder.VariationalAutoEncoder:
     return autoencoder.VariationalAutoEncoder(
-        input_shape=(28, 28, 1),
+        input_shape=input_shape,
         encoder_configs=[
             autoencoder.EncoderConfig(32, 3, 1),
             autoencoder.EncoderConfig(64, 3, 2),
@@ -27,7 +31,7 @@ def build_model(latent_dim: int) -> autoencoder.VariationalAutoEncoder:
             autoencoder.DecoderConfig(64, 3, 1),
             autoencoder.DecoderConfig(64, 3, 2),
             autoencoder.DecoderConfig(32, 3, 2),
-            autoencoder.DecoderConfig(1, 3, 1)
+            autoencoder.DecoderConfig(input_shape[-1], 3, 1)
         ],
         latent_dim=latent_dim)
 
@@ -52,7 +56,7 @@ def fetch_datasets():
     test_dataset = tf.data.Dataset.from_tensor_slices(
         (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
 
-    return train_dataset, test_dataset
+    return train_dataset, test_dataset, train_images.shape[1:]
 
 
 def write_events(writer, scalars, images, step):
@@ -210,8 +214,9 @@ def parse_cmd_line_args() -> argparse.Namespace:
 def run() -> None:
     """Execute training step(s) for the VAE model."""
     parsed_args = parse_cmd_line_args()
-    train_dataset, test_dataset = fetch_datasets()
-    model = build_model(latent_dim=parsed_args.latent_dim)
+    train_dataset, test_dataset, input_shape = fetch_datasets()
+    model = build_model(latent_dim=parsed_args.latent_dim,
+                        input_shape=input_shape)
 
     train_model(model=model,
                 train_dataset=train_dataset,

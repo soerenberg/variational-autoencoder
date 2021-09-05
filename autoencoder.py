@@ -1,5 +1,6 @@
 from typing import NamedTuple, Tuple
 
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
@@ -44,6 +45,7 @@ class VariationalAutoEncoder(keras.Model):
         self._decoder_configs = tuple(decoder_configs)
         self._latent_dim = latent_dim
 
+        self._shape_before_flattening: tf.TensorShape
         self._encoder = self._build_encoder()
         self._decoder = self._build_decoder()
 
@@ -58,10 +60,10 @@ class VariationalAutoEncoder(keras.Model):
         return self._decoder
 
     @classmethod
-    def from_latent_dim(cls, latent_dim):
+    def from_latent_dim(cls, latent_dim, input_shape):
         """Create a VAE with predefined architecture with desired latent dim.
         """
-        return cls(input_shape=(28, 28, 1),
+        return cls(input_shape=input_shape,
                    encoder_configs=[
                        EncoderConfig(32, 3, 1),
                        EncoderConfig(64, 3, 2),
@@ -72,7 +74,7 @@ class VariationalAutoEncoder(keras.Model):
                        DecoderConfig(64, 3, 1),
                        DecoderConfig(64, 3, 2),
                        DecoderConfig(32, 3, 2),
-                       DecoderConfig(1, 3, 1)
+                       DecoderConfig(input_shape[-1], 3, 1)
                    ],
                    latent_dim=latent_dim)
 
@@ -90,6 +92,7 @@ class VariationalAutoEncoder(keras.Model):
             tensor = tf.keras.layers.LeakyReLU()(tensor)
             tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
 
+        self._shape_before_flattening = tensor.shape[1:]
         tensor = tf.keras.layers.Flatten()(tensor)
 
         output = tf.keras.layers.Dense(self._latent_dim +
@@ -101,8 +104,9 @@ class VariationalAutoEncoder(keras.Model):
         inputs = tf.keras.layers.Input(shape=(self._latent_dim, ),
                                        name="decoder_input")
 
-        tensor = tf.keras.layers.Dense(7 * 7 * 64)(inputs)
-        tensor = tf.keras.layers.Reshape((7, 7, 64))(tensor)
+        tensor = tf.keras.layers.Dense(np.prod(
+            self._shape_before_flattening))(inputs)
+        tensor = tf.keras.layers.Reshape(self._shape_before_flattening)(tensor)
 
         for i, conf in enumerate(self._decoder_configs):
             tensor = tf.keras.layers.Conv2DTranspose(
