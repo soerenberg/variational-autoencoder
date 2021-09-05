@@ -36,17 +36,28 @@ def build_model(
         latent_dim=latent_dim)
 
 
+def preprocessing(images: np.ndarray) -> np.ndarray:
+    """Simple preprocessing for input data."""
+    if images.ndim == 3:
+        images = images[..., np.newaxis]
+    if images.ndim != 4:
+        raise ValueError(f"Input data has invalid shape {images.shape}.")
+
+    # Scale into range [0, 1]
+    min_value, max_value = images.min(), images.max()
+    images = (images + min_value) / (max_value + min_value)
+
+    return images.astype("float32")
+
+
 def fetch_datasets():
     fashion_mnist = tf.keras.datasets.fashion_mnist
 
     (train_images, train_labels), (test_images,
                                    test_labels) = fashion_mnist.load_data()
 
-    train_images = train_images[..., np.newaxis] / 255.
-    test_images = test_images[..., np.newaxis] / 255.
-
-    train_images = train_images.astype("float32")
-    test_images = test_images.astype("float32")
+    train_images = preprocessing(train_images)
+    test_images = preprocessing(test_images)
 
     batch_size = 32
 
