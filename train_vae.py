@@ -225,6 +225,7 @@ def parse_cmd_line_args() -> argparse.Namespace:
 def run() -> None:
     """Execute training step(s) for the VAE model."""
     parsed_args = parse_cmd_line_args()
+    set_up_logging(parsed_args.verbose) 
     train_dataset, test_dataset, input_shape = fetch_datasets()
     model = build_model(latent_dim=parsed_args.latent_dim,
                         input_shape=input_shape)
