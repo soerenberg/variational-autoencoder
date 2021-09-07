@@ -117,7 +117,7 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
         np.concatenate(image_list[i * edge_len:(i + 1) * edge_len], axis=0)
         for i in range(edge_len)
     ], axis=1)  # yapf:disable
-    matplotlib.image.imsave(image_dir / f"image_table_step_{step_count}.png",
+    matplotlib.image.imsave(image_dir / f"grid_step_{step_count}.png",
                             image_table)
 
 
