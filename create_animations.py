@@ -79,7 +79,7 @@ def run() -> None:
         path.stem.split("_")[1] for path in image_dir.glob("image_*.png"))
 
     logging.info("Read images from file")
-    ordered_images_series = [(int(iid), load_ordered_images(image_dir, iid))
+    ordered_images_series = [(iid, load_ordered_images(image_dir, iid))
                              for iid in tqdm(image_ids)]
 
     logging.info("Create animations")

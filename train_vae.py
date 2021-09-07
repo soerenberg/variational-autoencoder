@@ -87,11 +87,19 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
 
     Args:
         images: tensorial image batch. Must have shape
-            (num batches, width, height, channels).
+            (num batches, width, height, channels). Number of batches must be
+            a square.
         image_dir: directory to export images into.
         global_step: global step count to be included into the image file
             names.
     """
+    num_images = images.shape[0]
+    edge_len = np.sqrt(num_images).astype(int)
+    if edge_len**2 != num_images:
+        raise ValueError(
+            f"Number of example images must be a square, found {num_images}.")
+
+    image_list = []
     image_dir.mkdir(parents=True, exist_ok=True)
     for i, image in enumerate(images):
         img_count = str(i).zfill(int(np.ceil(np.log10(len(images)))))
@@ -102,6 +110,15 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
         if image.shape[-1] == 1:
             image = tf.tile(image, (1, 1, 3))
         matplotlib.image.imsave(out_file, image.numpy())
+        image_list.append(image)
+
+    # Stitch images together into a square
+    image_table = np.concatenate([
+        np.concatenate(image_list[i * edge_len:(i + 1) * edge_len], axis=0)
+        for i in range(edge_len)
+    ], axis=1)  # yapf:disable
+    matplotlib.image.imsave(image_dir / f"image_table_step_{step_count}.png",
+                            image_table)
 
 
 def train_model(model,
@@ -120,7 +137,7 @@ def train_model(model,
                               trainable=False,
                               dtype=tf.int64)
 
-    fixed_latents = tf.Variable(tf.random.normal(shape=(10, latent_dim)),
+    fixed_latents = tf.Variable(tf.random.normal(shape=(16, latent_dim)),
                                 name="fixed_latents",
                                 trainable=False)
 
@@ -225,7 +242,7 @@ def parse_cmd_line_args() -> argparse.Namespace:
 def run() -> None:
     """Execute training step(s) for the VAE model."""
     parsed_args = parse_cmd_line_args()
-    set_up_logging(parsed_args.verbose) 
+    set_up_logging(parsed_args.verbose)
     train_dataset, test_dataset, input_shape = fetch_datasets()
     model = build_model(latent_dim=parsed_args.latent_dim,
                         input_shape=input_shape)
