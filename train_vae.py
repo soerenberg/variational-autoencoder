@@ -50,11 +50,26 @@ def preprocessing(images: np.ndarray) -> np.ndarray:
     return images.astype("float32")
 
 
-def fetch_datasets():
-    fashion_mnist = tf.keras.datasets.fashion_mnist
+def fetch_datasets(
+        dataset: str
+) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.TensorShape]:
+    """Load dataset and apply rudimentary preprocessing.
+
+    Args:
+        dataset: name of dataset to be loaded.
+
+    Returns:
+        training dataset
+        test dataset
+        input shape of a single image
+    """
+    if dataset in ["cifar10", "cifar100", "fashion_mnist", "mnist"]:
+        raw_dataset = getattr(tf.keras.datasets, dataset)
+    else:
+        raise ValueError(f"Dataset '{dataset}' unknown.")
 
     (train_images, train_labels), (test_images,
-                                   test_labels) = fashion_mnist.load_data()
+                                   test_labels) = raw_dataset.load_data()
 
     train_images = preprocessing(train_images)
     test_images = preprocessing(test_images)
@@ -211,6 +226,12 @@ def parse_cmd_line_args() -> argparse.Namespace:
         dest="model_dir",
         required=True,
         help="Root directory for saving checkpoints and events.")
+    parser.add_argument("--dataset",
+                        "-d",
+                        action="store",
+                        dest="dataset",
+                        required=True,
+                        help="Name of training dataset, e.g. 'cifar10'.")
     parser.add_argument("--latent_dim",
                         action="store",
                         dest="latent_dim",
@@ -243,7 +264,8 @@ def run() -> None:
     """Execute training step(s) for the VAE model."""
     parsed_args = parse_cmd_line_args()
     set_up_logging(parsed_args.verbose)
-    train_dataset, test_dataset, input_shape = fetch_datasets()
+    train_dataset, test_dataset, input_shape = fetch_datasets(
+        parsed_args.dataset)
     model = build_model(latent_dim=parsed_args.latent_dim,
                         input_shape=input_shape)
 
