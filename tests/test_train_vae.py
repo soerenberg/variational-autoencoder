@@ -67,3 +67,18 @@ class TestExportImages:
         train_vae.export_images(images, tmp_path, global_step)
         for path in tmp_path.glob("image_*.png"):
             assert path.name in expected_files
+
+    @pytest.mark.parametrize(
+        "images,global_step,expected_files",
+        [(tf.zeros((8, 10, 10, 1)), tf.constant(3),
+          [f"image_{i}_step_00000003.png" for i in range(9)]),
+         (tf.zeros((111, 2, 2, 3)), tf.constant(33),
+          [f"image_{i:03}_step_00000033.png" for i in range(121)])])
+    def test_raises_if_no_square(self, tmp_path, images, global_step,
+                                 expected_files):
+        """Test that a ValueError is raised if batch sizes is not a square."""
+        batch_size = images.shape[0]
+        expected_message = (
+            f"Number of example images must be a square, found {batch_size}.")
+        with pytest.raises(ValueError, match=expected_message):
+            train_vae.export_images(images, tmp_path, global_step)
