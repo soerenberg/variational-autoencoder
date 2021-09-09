@@ -8,11 +8,14 @@ import tensorflow as tf
 
 def init_checkpoint_and_manager(
         checkpoint_path: pathlib.Path,
+        max_to_keep=None,
         **kwargs) -> Tuple[tf.train.Checkpoint, tf.train.CheckpointManager]:
     """Initialize checkpoint and checkpoint manager.
 
     Args:
         checkpoint_path: directory to save checkpoints into.
+        max_to_keep: number of events to keep. If `None` all events will be
+            kept. Defaults to None.
         **kwargs: additional keyword arguments to be included into the
             checkpoints.
 
@@ -23,7 +26,7 @@ def init_checkpoint_and_manager(
     check_pt = tf.train.Checkpoint(step=tf.Variable(1), **kwargs)
     check_pt_manager = tf.train.CheckpointManager(check_pt,
                                                   checkpoint_path,
-                                                  max_to_keep=10)
+                                                  max_to_keep=max_to_keep)
     return check_pt, check_pt_manager
 
 
