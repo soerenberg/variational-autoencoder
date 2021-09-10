@@ -27,16 +27,17 @@ def build_model(
                                       autoencoder.EncoderConfig(64, 3, 2),
                                       autoencoder.EncoderConfig(64, 3, 1)
                                   ])
+    decoder = autoencoder.Decoder(input_shape=encoder.shape_before_flattening,
+                                  latent_dim=latent_dim,
+                                  config=[
+                                      autoencoder.DecoderConfig(64, 3, 1),
+                                      autoencoder.DecoderConfig(64, 3, 2),
+                                      autoencoder.DecoderConfig(32, 3, 2),
+                                      autoencoder.DecoderConfig(
+                                          input_shape[-1], 3, 1)
+                                  ])
 
-    return autoencoder.VariationalAutoEncoder(
-        encoder=encoder,
-        decoder_configs=[
-            autoencoder.DecoderConfig(64, 3, 1),
-            autoencoder.DecoderConfig(64, 3, 2),
-            autoencoder.DecoderConfig(32, 3, 2),
-            autoencoder.DecoderConfig(input_shape[-1], 3, 1)
-        ],
-        latent_dim=latent_dim)
+    return autoencoder.VariationalAutoEncoder(encoder=encoder, decoder=decoder)
 
 
 def preprocessing(images: np.ndarray) -> np.ndarray:

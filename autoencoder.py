@@ -21,19 +21,6 @@ class EncoderConfig(NamedTuple):
     stride: int
 
 
-class DecoderConfig(NamedTuple):
-    """NamedTuple for configuring a Conv2DTranspose layer in an encoder.
-
-    Fields:
-        t_filter: num filters in layer
-        t_kernel_size: kernel size in layer
-        t_stride: stride in layer
-    """
-    t_filter: int
-    t_kernel_size: int
-    t_stride: int
-
-
 class Encoder(tf.keras.Model):
     """Encoder model."""
     def __init__(self, input_shape, latent_dim, config, *args, **kwargs):
@@ -73,16 +60,61 @@ class Encoder(tf.keras.Model):
         return outputs, shape_before_flattening
 
 
+class DecoderConfig(NamedTuple):
+    """NamedTuple for configuring a Conv2DTranspose layer in an encoder.
+
+    Fields:
+        t_filter: num filters in layer
+        t_kernel_size: kernel size in layer
+        t_stride: stride in layer
+    """
+    t_filter: int
+    t_kernel_size: int
+    t_stride: int
+
+
+class Decoder(tf.keras.Model):
+    def __init__(self, input_shape, latent_dim, config, *args, **kwargs):
+        self._input_shape = input_shape
+        self._latent_dim = latent_dim
+        self._config = config
+
+        inputs = tf.keras.layers.Input(shape=(self._latent_dim, ),
+                                       name="decoder_input")
+        outputs = self.build_outputs(inputs)
+
+        super().__init__(inputs, outputs)
+
+    def build_outputs(self, tensor: tf.Tensor) -> tf.Tensor:
+        """Create keras model and return outputs."""
+        tensor = tf.keras.layers.Dense(np.prod(self._input_shape))(tensor)
+        tensor = tf.keras.layers.Reshape(self._input_shape)(tensor)
+
+        for i, conf in enumerate(self._config):
+            tensor = tf.keras.layers.Conv2DTranspose(
+                filters=conf.t_filter,
+                kernel_size=conf.t_kernel_size,
+                strides=conf.t_stride,
+                padding="same",
+                name=f"decoder_conv_t_{i}")(tensor)
+
+            if i < len(self._config) - 1:
+                tensor = tf.keras.layers.BatchNormalization()(tensor)
+                tensor = tf.keras.layers.LeakyReLU()(tensor)
+                tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
+
+        # Note that we did not add any activation on the end, the decoder
+        # therefore returns values on the logit scale.
+        return tensor
+
+
 class VariationalAutoEncoder(keras.Model):
     """Variational Auto Encoder model."""
-    def __init__(self, encoder, decoder_configs, latent_dim, **kwargs):
+    def __init__(self, encoder, decoder, **kwargs):
         super().__init__(**kwargs)
 
         self._encoder = encoder
-        self._decoder_configs = tuple(decoder_configs)
-        self._latent_dim = latent_dim
-
-        self._decoder = self._build_decoder()
+        self._decoder = decoder
 
     @property
     def encoder(self) -> tf.keras.models.Model:
@@ -106,43 +138,15 @@ class VariationalAutoEncoder(keras.Model):
                               EncoderConfig(64, 3, 2),
                               EncoderConfig(64, 3, 1)
                           ])
-        return cls(encoder=encoder,
-                   decoder_configs=[
-                       DecoderConfig(64, 3, 1),
-                       DecoderConfig(64, 3, 2),
-                       DecoderConfig(32, 3, 2),
-                       DecoderConfig(input_shape[-1], 3, 1)
-                   ],
-                   latent_dim=latent_dim)
-
-    def _build_decoder(self):
-        inputs = tf.keras.layers.Input(shape=(self._latent_dim, ),
-                                       name="decoder_input")
-
-        tensor = tf.keras.layers.Dense(
-            np.prod(self.encoder.shape_before_flattening))(inputs)
-        tensor = tf.keras.layers.Reshape(
-            self.encoder.shape_before_flattening)(tensor)
-
-        for i, conf in enumerate(self._decoder_configs):
-            tensor = tf.keras.layers.Conv2DTranspose(
-                filters=conf.t_filter,
-                kernel_size=conf.t_kernel_size,
-                strides=conf.t_stride,
-                padding="same",
-                name=f"decoder_conv_t_{i}")(tensor)
-
-            if i < len(self._decoder_configs) - 1:
-                tensor = tf.keras.layers.BatchNormalization()(tensor)
-                tensor = tf.keras.layers.LeakyReLU()(tensor)
-                tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
-
-        # Note that we did not add any activation on the end, the decoder
-        # therefore returns values on the logit scale.
-
-        decoder_output = tensor
-
-        return tf.keras.models.Model(inputs, decoder_output)
+        decoder = Decoder(input_shape=encoder.shape_before_flattening,
+                          latent_dim=latent_dim,
+                          config=[
+                              DecoderConfig(64, 3, 1),
+                              DecoderConfig(64, 3, 2),
+                              DecoderConfig(32, 3, 2),
+                              DecoderConfig(input_shape[-1], 3, 1)
+                          ])
+        return cls(encoder=encoder, decoder=decoder)
 
     def encode(self, tensor: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
         mean, log_var = tf.split(self._encoder(tensor),
