@@ -1,4 +1,4 @@
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, List, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -23,7 +23,12 @@ class EncoderConfig(NamedTuple):
 
 class Encoder(tf.keras.Model):
     """Encoder model."""
-    def __init__(self, input_shape, latent_dim, config, *args, **kwargs):
+    def __init__(self,
+                 input_shape: tf.TensorShape,
+                 latent_dim: int,
+                 config=List[EncoderConfig],
+                 *args,
+                 **kwargs):
         self._input_shape = input_shape
         self._latent_dim = latent_dim
         self._config = config
@@ -35,11 +40,12 @@ class Encoder(tf.keras.Model):
         super().__init__(inputs, outputs, name="encoder", *args, **kwargs)
 
     @property
-    def shape_before_flattening(self):
+    def shape_before_flattening(self) -> tf.TensorShape:
         """Return tensor shape before the final flattening op is applied."""
         return self._shape_before_flattening
 
-    def build_outputs(self, tensor) -> Tuple[tf.Tensor, tf.TensorShape]:
+    def build_outputs(self,
+                      tensor: tf.Tensor) -> Tuple[tf.Tensor, tf.TensorShape]:
         """Create keras model and return outputs."""
         for i, conf in enumerate(self._config):
             tensor = tf.keras.layers.Conv2D(filters=conf.filter,
@@ -74,7 +80,9 @@ class DecoderConfig(NamedTuple):
 
 
 class Decoder(tf.keras.Model):
-    def __init__(self, input_shape, latent_dim, config, *args, **kwargs):
+    """Decoder model."""
+    def __init__(self, input_shape: tf.TensorShape, latent_dim: int,
+                 config: List[DecoderConfig], *args, **kwargs):
         self._input_shape = input_shape
         self._latent_dim = latent_dim
         self._config = config
