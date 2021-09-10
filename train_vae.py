@@ -19,14 +19,17 @@ def build_model(
         latent_dim: int,
         input_shape: Tuple[int, int,
                            int]) -> autoencoder.VariationalAutoEncoder:
+    encoder = autoencoder.Encoder(input_shape=input_shape,
+                                  latent_dim=latent_dim,
+                                  config=[
+                                      autoencoder.EncoderConfig(32, 3, 1),
+                                      autoencoder.EncoderConfig(64, 3, 2),
+                                      autoencoder.EncoderConfig(64, 3, 2),
+                                      autoencoder.EncoderConfig(64, 3, 1)
+                                  ])
+
     return autoencoder.VariationalAutoEncoder(
-        input_shape=input_shape,
-        encoder_configs=[
-            autoencoder.EncoderConfig(32, 3, 1),
-            autoencoder.EncoderConfig(64, 3, 2),
-            autoencoder.EncoderConfig(64, 3, 2),
-            autoencoder.EncoderConfig(64, 3, 1)
-        ],
+        encoder=encoder,
         decoder_configs=[
             autoencoder.DecoderConfig(64, 3, 1),
             autoencoder.DecoderConfig(64, 3, 2),

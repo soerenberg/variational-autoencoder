@@ -34,19 +34,54 @@ class DecoderConfig(NamedTuple):
     t_stride: int
 
 
+class Encoder(tf.keras.Model):
+    """Encoder model."""
+    def __init__(self, input_shape, latent_dim, config, *args, **kwargs):
+        self._input_shape = input_shape
+        self._latent_dim = latent_dim
+        self._config = config
+        self._shape_before_flattening: tf.TensorShape
+
+        inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
+        outputs, self._shape_before_flattening = self.build_outputs(inputs)
+
+        super().__init__(inputs, outputs, name="encoder", *args, **kwargs)
+
+    @property
+    def shape_before_flattening(self):
+        """Return tensor shape before the final flattening op is applied."""
+        return self._shape_before_flattening
+
+    def build_outputs(self, tensor) -> Tuple[tf.Tensor, tf.TensorShape]:
+        """Create keras model and return outputs."""
+        for i, conf in enumerate(self._config):
+            tensor = tf.keras.layers.Conv2D(filters=conf.filter,
+                                            kernel_size=conf.kernel_size,
+                                            strides=conf.stride,
+                                            padding="same",
+                                            name=f"encoder_conv_{i}")(tensor)
+            tensor = tf.keras.layers.BatchNormalization()(tensor)
+            tensor = tf.keras.layers.LeakyReLU()(tensor)
+            tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
+
+        shape_before_flattening = tensor.shape[1:]
+        tensor = tf.keras.layers.Flatten()(tensor)
+
+        outputs = tf.keras.layers.Dense(self._latent_dim +
+                                        self._latent_dim)(tensor)
+
+        return outputs, shape_before_flattening
+
+
 class VariationalAutoEncoder(keras.Model):
     """Variational Auto Encoder model."""
-    def __init__(self, input_shape, encoder_configs, decoder_configs,
-                 latent_dim, **kwargs):
+    def __init__(self, encoder, decoder_configs, latent_dim, **kwargs):
         super().__init__(**kwargs)
 
-        self._input_shape = input_shape
-        self._encoder_configs = tuple(encoder_configs)
+        self._encoder = encoder
         self._decoder_configs = tuple(decoder_configs)
         self._latent_dim = latent_dim
 
-        self._shape_before_flattening: tf.TensorShape
-        self._encoder = self._build_encoder()
         self._decoder = self._build_decoder()
 
     @property
@@ -63,13 +98,15 @@ class VariationalAutoEncoder(keras.Model):
     def from_latent_dim(cls, latent_dim, input_shape):
         """Create a VAE with predefined architecture with desired latent dim.
         """
-        return cls(input_shape=input_shape,
-                   encoder_configs=[
-                       EncoderConfig(32, 3, 1),
-                       EncoderConfig(64, 3, 2),
-                       EncoderConfig(64, 3, 2),
-                       EncoderConfig(64, 3, 1)
-                   ],
+        encoder = Encoder(input_shape=input_shape,
+                          latent_dim=latent_dim,
+                          config=[
+                              EncoderConfig(32, 3, 1),
+                              EncoderConfig(64, 3, 2),
+                              EncoderConfig(64, 3, 2),
+                              EncoderConfig(64, 3, 1)
+                          ])
+        return cls(encoder=encoder,
                    decoder_configs=[
                        DecoderConfig(64, 3, 1),
                        DecoderConfig(64, 3, 2),
@@ -78,35 +115,14 @@ class VariationalAutoEncoder(keras.Model):
                    ],
                    latent_dim=latent_dim)
 
-    def _build_encoder(self):
-        inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
-
-        tensor = inputs
-        for i, conf in enumerate(self._encoder_configs):
-            tensor = tf.keras.layers.Conv2D(filters=conf.filter,
-                                            kernel_size=conf.kernel_size,
-                                            strides=conf.stride,
-                                            padding="same",
-                                            name=f"encoder_conv_{i}")(tensor)
-            tensor = tf.keras.layers.BatchNormalization()(tensor)
-            tensor = tf.keras.layers.LeakyReLU()(tensor)
-            tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
-
-        self._shape_before_flattening = tensor.shape[1:]
-        tensor = tf.keras.layers.Flatten()(tensor)
-
-        output = tf.keras.layers.Dense(self._latent_dim +
-                                       self._latent_dim)(tensor)
-
-        return keras.models.Model(inputs, output, name="encoder")
-
     def _build_decoder(self):
         inputs = tf.keras.layers.Input(shape=(self._latent_dim, ),
                                        name="decoder_input")
 
-        tensor = tf.keras.layers.Dense(np.prod(
-            self._shape_before_flattening))(inputs)
-        tensor = tf.keras.layers.Reshape(self._shape_before_flattening)(tensor)
+        tensor = tf.keras.layers.Dense(
+            np.prod(self.encoder.shape_before_flattening))(inputs)
+        tensor = tf.keras.layers.Reshape(
+            self.encoder.shape_before_flattening)(tensor)
 
         for i, conf in enumerate(self._decoder_configs):
             tensor = tf.keras.layers.Conv2DTranspose(
