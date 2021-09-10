@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-import checkpointing
 import vae_loss
 
 

@@ -67,7 +67,8 @@ class TestVariationalAutoEncoder:
         """Test correctness of sample_from_latent_conditional method."""
         mocker.patch.object(tf.random, "normal", return_value=std_samples)
 
-        result = autoencoder.VariationalAutoEncoder.sample_from_latent_conditional(
-            tf.constant(mean, dtype), tf.constant(log_var, dtype))
+        result = (
+            autoencoder.VariationalAutoEncoder.sample_from_latent_conditional(
+                tf.constant(mean, dtype), tf.constant(log_var, dtype)))
 
         np.testing.assert_array_almost_equal(result.numpy(), expected)
