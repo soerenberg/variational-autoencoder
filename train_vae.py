@@ -6,6 +6,7 @@ import time
 from typing import Tuple
 
 import matplotlib
+import matplotlib.pyplot as plt  # noqa: F401
 import numpy as np
 import tensorflow as tf
 
@@ -137,6 +138,28 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
     ], axis=1)  # yapf:disable
     matplotlib.image.imsave(image_dir / f"grid_step_{step_count}.png",
                             image_table)
+
+
+def get_indices_of_closest_vectors(elements: tf.Tensor,
+                                   tensors: tf.Tensor) -> tf.Tensor:
+    """Compute indices of closest points for a batch of tensors in a set.
+
+    For each tensor `t` out of a given batch of tensors `elements`, where the
+    first dimension references the different vectors, determines the index of
+    of the closest vector in `tensors`, where again the first dimensions
+    references the different instances.
+    Here, 'closest' mean closest in terms of the Euclidean distance.
+
+    Args:
+        elements: (num_examples, dims)
+        datasets: (size of set, dims)
+
+    Returns:
+        tf.Tensor of shape (num_examples,) and dtype tf.int64
+    """
+    diffs = elements[:, tf.newaxis, ...] - tensors[tf.newaxis, :, ...]
+    squared_distances = tf.reduce_sum(tf.square(diffs), axis=2)
+    return tf.argmin(squared_distances, axis=1)
 
 
 def train_model(model,

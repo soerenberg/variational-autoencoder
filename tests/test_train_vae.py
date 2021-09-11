@@ -82,3 +82,19 @@ class TestExportImages:
             f"Number of example images must be a square, found {batch_size}.")
         with pytest.raises(ValueError, match=expected_message):
             train_vae.export_images(images, tmp_path, global_step)
+
+
+@pytest.mark.parametrize("dtype", [tf.float32, tf.float64])
+@pytest.mark.parametrize("elements,tensors,expected", [
+    ([[0]], [[0]], [0]),
+    ([[2]], [[0], [1], [4]], [1]),
+    (np.zeros((11, 2)), np.arange(15 * 2).reshape(15, 2), np.zeros(11)),
+    ([[0, 0], [1, 1], [-10, -10]], [[0, 0], [-11, -14], [.5, .6]], [0, 2, 1]),
+])
+def test_get_indices_of_closest_vectors(elements, tensors, dtype, expected):
+    """Tests for train_vae.get_indices_of_closest_vectors."""
+    result = train_vae.get_indices_of_closest_vectors(
+        tf.constant(elements, dtype), tf.constant(tensors, dtype))
+
+    assert result.dtype == tf.int64
+    np.testing.assert_array_equal(result.numpy(), expected)
