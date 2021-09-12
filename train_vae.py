@@ -2,7 +2,6 @@
 import argparse
 import logging
 import pathlib
-import time
 from typing import Tuple
 
 import matplotlib
@@ -198,19 +197,21 @@ def train_model(model,
     writer = tf.summary.create_file_writer(str(model_dir / "events"))
 
     for epoch in range(1, num_epochs + 1):
-        start_time = time.time()
+        print(f"\nepoch {epoch}/{num_epochs}")
+        progbar = tf.keras.utils.Progbar(train_dataset.cardinality().numpy(),
+                                         stateful_metrics=[train_elbo])
 
-        for train_x, _ in train_dataset:
+        for i, (train_x, _) in enumerate(train_dataset):
             model.train_step(train_x, optimizer, train_elbo)
+            progbar.update(i, values=[("train_elbo", train_elbo.result())])
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
                                                      check_pt_every_n_epochs)
 
+        logging.info("Evaluate test set ELBO")
         for test_x, _ in test_dataset:
             test_elbo(-tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
-
-        elapsed_time = time.time() - start_time
 
         example_images = tf.nn.sigmoid(model.decoder(fixed_latents))
         global_step.assign_add(1)
@@ -221,9 +222,6 @@ def train_model(model,
                      images=dict(example_images=example_images),
                      step=global_step)
         export_images(example_images, model_dir / "images", global_step)
-
-        print(f"Epoch: {epoch}, mean test set ELBO {test_elbo.result()}, "
-              f"time elapsed: {elapsed_time}")
     return model
 
 
