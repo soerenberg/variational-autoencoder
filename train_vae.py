@@ -77,13 +77,10 @@ def fetch_datasets(
     train_images = preprocessing(train_images)
     test_images = preprocessing(test_images)
 
-    batch_size = 32
-
     train_dataset = tf.data.Dataset.from_tensor_slices(
-        (train_images,
-         train_labels)).shuffle(len(train_images)).batch(batch_size)
+        (train_images, train_labels)).shuffle(len(train_images))
     test_dataset = tf.data.Dataset.from_tensor_slices(
-        (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
+        (test_images, test_labels)).shuffle(len(test_images))
 
     return train_dataset, test_dataset, train_images.shape[1:]
 
@@ -165,6 +162,7 @@ def train_model(model,
                 train_dataset,
                 test_dataset,
                 num_epochs,
+                batch_size,
                 learning_rate,
                 latent_dim,
                 model_dir,
@@ -201,7 +199,7 @@ def train_model(model,
         progbar = tf.keras.utils.Progbar(train_dataset.cardinality().numpy(),
                                          stateful_metrics=[train_elbo])
 
-        for i, (train_x, _) in enumerate(train_dataset):
+        for i, (train_x, _) in enumerate(train_dataset.batch(batch_size)):
             model.train_step(train_x, optimizer, train_elbo)
             progbar.update(i, values=[("train_elbo", train_elbo.result())])
 
@@ -210,7 +208,7 @@ def train_model(model,
                                                      check_pt_every_n_epochs)
 
         logging.info("Evaluate test set ELBO")
-        for test_x, _ in test_dataset:
+        for test_x, _ in test_dataset.batch(batch_size):
             test_elbo(-tf.reduce_mean(vae_loss.compute_loss(model, test_x)))
 
         example_images = tf.nn.sigmoid(model.decoder(fixed_latents))
@@ -218,7 +216,8 @@ def train_model(model,
         write_events(writer,
                      scalars=dict(train_elbo=train_elbo.result(),
                                   test_elbo=test_elbo.result(),
-                                  learning_rate=learning_rate),
+                                  learning_rate=learning_rate,
+                                  batch_size=batch_size),
                      images=dict(example_images=example_images),
                      step=global_step)
         export_images(example_images, model_dir / "images", global_step)
@@ -268,6 +267,12 @@ def parse_cmd_line_args() -> argparse.Namespace:
                         type=int,
                         default=1,
                         help="Num epochs to train. Defaults to 1.")
+    parser.add_argument("--batch_size",
+                        action="store",
+                        dest="batch_size",
+                        type=int,
+                        default=32,
+                        help="Batch size. Defaults to 32.")
     parser.add_argument("--learning_rate",
                         action="store",
                         dest="learning_rate",
@@ -297,6 +302,7 @@ def run() -> None:
                 train_dataset=train_dataset,
                 test_dataset=test_dataset,
                 num_epochs=parsed_args.num_epochs,
+                batch_size=parsed_args.batch_size,
                 learning_rate=parsed_args.learning_rate,
                 latent_dim=parsed_args.latent_dim,
                 model_dir=pathlib.Path(parsed_args.model_dir),

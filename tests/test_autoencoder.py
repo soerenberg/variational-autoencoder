@@ -26,24 +26,23 @@ def test_model_noise_run(input_shape, train_size, test_size, latent_dim,
                                     input_shape).astype("float32")
     test_labels = np.random.choice(np.arange(10), size=test_size)
 
-    batch_size = 2
-
     train_dataset = tf.data.Dataset.from_tensor_slices(
-        (train_images,
-         train_labels)).shuffle(len(train_images)).batch(batch_size)
+        (train_images, train_labels)).shuffle(len(train_images))
     test_dataset = tf.data.Dataset.from_tensor_slices(
-        (test_images, test_labels)).shuffle(len(test_images)).batch(batch_size)
+        (test_images, test_labels)).shuffle(len(test_images))
 
     vautoencoder = autoencoder.VariationalAutoEncoder.from_latent_dim(
         latent_dim=latent_dim, input_shape=input_shape)
 
     learning_rate = .0005
     num_epochs = 3
+    batch_size = 2
 
     train_vae.train_model(vautoencoder,
                           train_dataset,
                           test_dataset,
                           num_epochs,
+                          batch_size,
                           learning_rate,
                           latent_dim,
                           tmp_path,
