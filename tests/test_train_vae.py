@@ -31,6 +31,25 @@ class TestBuildModel:
         assert isinstance(created_model, autoencoder.VariationalAutoEncoder)
 
 
+class TestFetchDatasets:
+    """Tests for train_vae.fetch_datasets."""
+    def test_raises(self):
+        """Test that ValueError is raised for invalid dataset name."""
+        name = "some invalid dataset name"
+        with pytest.raises(ValueError, match=f"Dataset '{name}' unknown."):
+            train_vae.fetch_datasets(name)
+
+    @pytest.mark.parametrize("dataset", ["mnist", "cifar10"])
+    def test_normalizes(self, dataset):
+        """Test that datasets are normalized to have values in [0,1] range."""
+        train_dataset, test_dataset, input_shape = train_vae.fetch_datasets(
+            dataset)
+
+        for image, _ in train_dataset:
+            assert 0. <= image.numpy().min()
+            assert image.numpy().max() <= 1.
+
+
 class TestExportImages:
     # pylint: disable=no-self-use
     """Tests for train_vae.export_images."""
