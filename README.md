@@ -10,7 +10,7 @@ Variational Autoencoder model applied to FashionMNIST dataset.
 
 #### Latent dimension 25
 
-![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/mnist_latent_dim_25/grid_animation.gif?raw=true "Training progress of VAE")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/mnist_latent_dim_25/grid_animations.gif?raw=true "Training progress of VAE")
 
 Generated | Training set
 --- | ---
