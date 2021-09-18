@@ -1,8 +1,9 @@
 """Execute one or more training steps from the command line."""
 import argparse
+import functools
 import logging
 import pathlib
-from typing import Tuple
+from typing import Tuple, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt  # noqa: F401
@@ -136,6 +137,57 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
                             image_table)
 
 
+def export_planar_encoding_plot(encoder: autoencoder.Encoder,
+                                dataset: tf.data.Dataset,
+                                image_dir: pathlib.Path,
+                                global_step: tf.Tensor,
+                                kind: str = "",
+                                max_pts: Optional[int] = None):
+    """Export a figure of the encoding of a dataset on the latent space.
+
+    Args:
+        encoder: encoder to encode the dataset
+        dataset: dataset to encode
+        image_dir: directory to export image into
+        global_step: global step to be included into the file name
+        kind: will be included into the filename, e.g. 'train' or 'test'
+        max_pts: the first `max_pts` of dataset will be included in the plot,
+            or if `None` all points will be included. Defaults to None.
+    """
+    def encode(encoder: tf.keras.Model, tensor: tf.Tensor,
+               label: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+        """Encode a single data point."""
+        return tf.split(encoder(tensor[tf.newaxis, ...]),
+                        num_or_size_splits=2,
+                        axis=1)[0][0], label
+
+    max_pts = max_pts or len(dataset)
+    dataset = dataset.map(functools.partial(
+        encode, encoder)).take(max_pts).batch(max_pts)
+    images, labels = next(iter(dataset))
+
+    fig, ax = plt.subplots(figsize=(10, 10))  # pylint: disable=invalid-name
+
+    images = images.numpy()
+    labels = labels.numpy()
+
+    cmap = "tab20" if len(np.unique(labels)) <= 20 else "inferno"
+    scatter = ax.scatter(images[:, 0],
+                         images[:, 1],
+                         c=labels,
+                         label=labels,
+                         cmap=cmap,
+                         s=16,
+                         alpha=1.)
+
+    ax.legend(*scatter.legend_elements(), loc="upper right", title="Labels")
+    ax.set_title(
+        f"Encoding on planar latent space ({kind}) - {images.shape[0]} pts.")
+
+    step_count = str(global_step.numpy()).zfill(8)
+    fig.savefig(image_dir / f"planar_encoding_{kind}_step_{step_count}.png", )
+
+
 def get_indices_of_closest_vectors(elements: tf.Tensor,
                                    tensors: tf.Tensor) -> tf.Tensor:
     """Compute indices of closest points for a batch of tensors in a set.
@@ -221,6 +273,20 @@ def train_model(model,
                      images=dict(example_images=example_images),
                      step=global_step)
         export_images(example_images, model_dir / "images", global_step)
+
+        if latent_dim == 2:
+            export_planar_encoding_plot(encoder=model.encoder,
+                                        dataset=train_dataset,
+                                        image_dir=model_dir / "images",
+                                        global_step=global_step,
+                                        kind="train",
+                                        max_pts=10000)
+            export_planar_encoding_plot(encoder=model.encoder,
+                                        dataset=test_dataset,
+                                        image_dir=model_dir / "images",
+                                        global_step=global_step,
+                                        kind="test",
+                                        max_pts=10000)
     return model
 
 
