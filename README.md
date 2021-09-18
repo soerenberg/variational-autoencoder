@@ -1,7 +1,18 @@
 [![Build Status](https://app.travis-ci.com/soerenberg/fashion-vae.svg?token=hpcdeWX5ho5Gtj7Nsa3k&branch=main)](https://app.travis-ci.com/soerenberg/fashion-vae)
 
-# fashion-vae
-Variational Autoencoder model applied to FashionMNIST dataset.
+# Variational Autoencoder
+
+Implementation of a Variational Autoencoder model applied to several datasets.
+
+The model is implemented in `TensorFlow 2` using its `Keras` API `tf.keras`.
+The primary goal of this project was not to find the most performant ANN
+architecture for a general VAE or even to find very well-tuned hyperparameters.
+The primary goal wast to have a small, maintanable, reliable & well-tested code
+which is easy to extend, and present some simple results to demonstrate that
+the model is quite able to create new images instead of just reconstructing
+training instances.
+
+Below you find results for some of the most well-known datasets.
 
 
 ## Results
@@ -9,6 +20,10 @@ Variational Autoencoder model applied to FashionMNIST dataset.
 ### MNIST dataset
 
 #### Latent dimension 25
+
+The following animation shows how the decoder of the VAE model creates images
+for a set of 16 points randomly sampled in the latent space held fixed over
+all epochs.
 
 ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/mnist_latent_dim_25/grid_animations.gif?raw=true "Training progress of VAE")
 
