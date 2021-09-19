@@ -275,7 +275,8 @@ def train_model(model,
 
         for i, (train_x, _) in enumerate(train_dataset.batch(batch_size)):
             model.train_step(train_x, optimizer, train_elbo)
-            progbar.update(i, values=[("train_elbo", train_elbo.result())])
+            progbar.update((i + 1) * batch_size,
+                           values=[("train_elbo", train_elbo.result())])
 
         checkpointing.write_checkpoint_if_necesssary(check_pt,
                                                      check_pt_manager,
