@@ -183,8 +183,8 @@ def export_planar_encoding_plot(encoder: autoencoder.Encoder,
     labels = labels.numpy()
 
     pca_note = ""
-    if images.shape[0] > 2:
-        pca_note = f", projected dim. {images.shape[0]} to dim. 2 with PCA"
+    if images.shape[1] > 2:
+        pca_note = f", projected dim. {images.shape[1]} to dim. 2 with PCA"
         images = PCA(n_components=2).fit_transform(images)
 
     fig, ax = plt.subplots(figsize=(10, 10))  # pylint: disable=invalid-name
