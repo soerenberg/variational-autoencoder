@@ -168,7 +168,7 @@ def export_planar_encoding_plot(encoder: autoencoder.Encoder,
             or if `None` all points will be included. Defaults to None.
     """
     def encode(encoder: tf.keras.Model, tensor: tf.Tensor,
-               label: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+               label: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor]:
         """Encode a single data point."""
         return tf.split(encoder(tensor[tf.newaxis, ...]),
                         num_or_size_splits=2,
