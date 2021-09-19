@@ -197,6 +197,10 @@ def export_planar_encoding_plot(encoder: autoencoder.Encoder,
                          s=16,
                          alpha=1.)
 
+    # Since points are standard normally distributed we can use limits safely.
+    ax.set_xlim(-3.5, 3.5)
+    ax.set_ylim(-3.5, 3.5)
+
     ax.legend(*scatter.legend_elements(), loc="upper right", title="Labels")
     ax.set_title(
         f"Encoding on planar latent space ({kind}) - {images.shape[0]} pts"
