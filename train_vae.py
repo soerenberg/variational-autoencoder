@@ -8,6 +8,7 @@ from typing import Tuple, Optional
 import matplotlib
 import matplotlib.pyplot as plt  # noqa: F401
 import numpy as np
+from sklearn.decomposition import PCA
 import tensorflow as tf
 
 import checkpointing
@@ -137,6 +138,15 @@ def export_images(images: tf.Tensor, image_dir: pathlib.Path,
                             image_table)
 
 
+def get_cmap(num_labels: int) -> str:
+    """Returns suitable cmap for given number of distinct labels."""
+    if num_labels <= 10:
+        return "tab10"
+    if num_labels <= 20:
+        return "tab20"
+    return "inferno"
+
+
 def export_planar_encoding_plot(encoder: autoencoder.Encoder,
                                 dataset: tf.data.Dataset,
                                 image_dir: pathlib.Path,
@@ -144,6 +154,9 @@ def export_planar_encoding_plot(encoder: autoencoder.Encoder,
                                 kind: str = "",
                                 max_pts: Optional[int] = None):
     """Export a figure of the encoding of a dataset on the latent space.
+
+    If the latent space has a higher dimension than 2, it will be projected
+    into planar space using PCA first.
 
     Args:
         encoder: encoder to encode the dataset
@@ -166,23 +179,28 @@ def export_planar_encoding_plot(encoder: autoencoder.Encoder,
         encode, encoder)).take(max_pts).batch(max_pts)
     images, labels = next(iter(dataset))
 
-    fig, ax = plt.subplots(figsize=(10, 10))  # pylint: disable=invalid-name
-
     images = images.numpy()
     labels = labels.numpy()
 
-    cmap = "tab20" if len(np.unique(labels)) <= 20 else "inferno"
+    pca_note = ""
+    if images.shape[0] > 2:
+        pca_note = f", projected dim. {images.shape[0]} to dim. 2 with PCA"
+        images = PCA(n_components=2).fit_transform(images)
+
+    fig, ax = plt.subplots(figsize=(10, 10))  # pylint: disable=invalid-name
+
     scatter = ax.scatter(images[:, 0],
                          images[:, 1],
                          c=labels,
                          label=labels,
-                         cmap=cmap,
+                         cmap=get_cmap(num_labels=len(np.unique(labels))),
                          s=16,
                          alpha=1.)
 
     ax.legend(*scatter.legend_elements(), loc="upper right", title="Labels")
     ax.set_title(
-        f"Encoding on planar latent space ({kind}) - {images.shape[0]} pts.")
+        f"Encoding on planar latent space ({kind}) - {images.shape[0]} pts"
+        f"{pca_note}.")
 
     step_count = str(global_step.numpy()).zfill(8)
     fig.savefig(image_dir / f"planar_encoding_{kind}_step_{step_count}.png", )
@@ -274,19 +292,18 @@ def train_model(model,
                      step=global_step)
         export_images(example_images, model_dir / "images", global_step)
 
-        if latent_dim == 2:
-            export_planar_encoding_plot(encoder=model.encoder,
-                                        dataset=train_dataset,
-                                        image_dir=model_dir / "images",
-                                        global_step=global_step,
-                                        kind="train",
-                                        max_pts=10000)
-            export_planar_encoding_plot(encoder=model.encoder,
-                                        dataset=test_dataset,
-                                        image_dir=model_dir / "images",
-                                        global_step=global_step,
-                                        kind="test",
-                                        max_pts=10000)
+        export_planar_encoding_plot(encoder=model.encoder,
+                                    dataset=train_dataset,
+                                    image_dir=model_dir / "images",
+                                    global_step=global_step,
+                                    kind="train",
+                                    max_pts=10000)
+        export_planar_encoding_plot(encoder=model.encoder,
+                                    dataset=test_dataset,
+                                    image_dir=model_dir / "images",
+                                    global_step=global_step,
+                                    kind="test",
+                                    max_pts=10000)
     return model
 
 
