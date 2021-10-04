@@ -119,7 +119,7 @@ def run() -> None:
     train_dataset, _, input_shape = train_vae.fetch_datasets(
         parsed_args.dataset)
 
-    model = train_vae.build_model(latent_dim, input_shape)
+    model = train_vae.build_default_model(latent_dim, input_shape)
 
     check_pt, check_pt_manager = checkpointing.init_checkpoint_and_manager(
         checkpoint_path=checkpoint_dir, model=model)
