@@ -14,6 +14,7 @@ import train_vae
 def test_model_noise_run(input_shape, train_size, test_size, latent_dim,
                          tmp_path):
     """Simple functional test, building model on noise data."""
+    np.random.seed(1)
     train_images = np.random.uniform(low=0,
                                      high=255.,
                                      size=(train_size, ) +
