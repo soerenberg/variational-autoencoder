@@ -47,6 +47,49 @@ Generated | Training set
 ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/mnist_latent_dim_25/image_15_step_00000097.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/mnist_latent_dim_25/train_image_closest_to_15_label_6.png?raw=true "Image from training set")
 
 
+### Fashion-MNIST dataset
+
+#### Latent dimension 100
+
+The following animation shows how the decoder of the VAE model creates images
+for a set of 16 points randomly sampled in the latent space held fixed over
+all epochs.
+
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/grid_animations.gif?raw=true "Training progress of VAE")
+
+Generated | Training set
+--- | ---
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_00_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_0_label_8.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_01_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_1_label_3.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_02_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_2_label_2.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_03_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_3_label_8.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_04_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_4_label_9.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_05_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_5_label_2.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_06_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_6_label_6.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_07_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_7_label_0.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_08_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_8_label_1.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_09_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_9_label_8.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_10_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_10_label_3.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_11_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_11_label_9.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_12_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_12_label_2.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_13_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_13_label_5.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_14_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_14_label_6.png?raw=true "Image from training set")
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/image_15_step_00000041.png?raw=true "Image generated from VAE") | ![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/train_image_closest_to_15_label_6.png?raw=true "Image from training set")
+
+#### Visualization of 10k points of the train set in the latent space
+
+The points from the 100 dimensional latent space have been projected into the
+plane using PCA.
+
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/planar_encoding_train_step_00000041.png?raw=true "Encoding to latent space")
+
+
+#### Visualization of 10k points of the test set in the latent space
+
+The points from the 100 dimensional latent space have been projected into the
+plane using PCA.
+
+![alt text](https://github.com/soerenberg/variational-autoencoder/blob/main/images/fashion_mnist_latent_dim_100/planar_encoding_test_step_00000041.png?raw=true "Encoding to latent space")
 
 ### CIFAR-10 dataset
 
