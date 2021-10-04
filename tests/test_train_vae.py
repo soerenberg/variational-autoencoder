@@ -9,14 +9,14 @@ import train_vae
 
 
 class TestBuildModel:
-    """Tests for train_vae.build_model."""
+    """Tests for train_vae.build_default_model."""
     # pylint: disable=no-self-use
     @pytest.fixture(name="created_model",
                     params=[(1, (1, 1, 1)), (2, (28, 28, 1)),
                             (100, (32, 32, 3)), (17, (12, 12, 4))])
     def created_model_fixture(self, request):
-        """Model object created from build_model function."""
-        return train_vae.build_model(*request.param)
+        """Model object created from build_default_model function."""
+        return train_vae.build_default_model(*request.param)
 
     def test_has_encoder(self, created_model):
         """Test that model has an encoder."""

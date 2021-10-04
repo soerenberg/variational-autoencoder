@@ -3,7 +3,7 @@ import argparse
 import functools
 import logging
 import pathlib
-from typing import Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt  # noqa: F401
@@ -16,10 +16,19 @@ import autoencoder
 import vae_loss
 
 
-def build_model(
+def build_default_model(
         latent_dim: int,
         input_shape: Tuple[int, int,
                            int]) -> autoencoder.VariationalAutoEncoder:
+    """Creates a VAE model with a simple architecture.
+
+    Args:
+        latent_dim: dimension of the latent.
+        input_shape: shape of a single image, e.g. (28, 28, 1) or (32, 32, 3).
+
+    Returns:
+        VariationalAutoEncoder model.
+    """
     encoder = autoencoder.Encoder(input_shape=input_shape,
                                   latent_dim=latent_dim,
                                   config=[
@@ -87,7 +96,20 @@ def fetch_datasets(
     return train_dataset, test_dataset, train_images.shape[1:]
 
 
-def write_events(writer, scalars, images, step):
+def write_events(
+        writer: tf.summary.SummaryWriter,
+        scalars: Dict[str, tf.Tensor],
+        images: Dict[str, tf.Tensor],
+        step: tf.Tensor):  # yapf: disable
+    """Write TF event files.
+
+    Args:
+        writer: SummaryWriter to write summary to.
+        scalars: dict containing scalar numbers to be included in the summary.
+        images: images containing scalar numbers to be included in the summary.
+        step: global step. Data written will be assigned to the global step for
+            documenting progress.
+    """
     with writer.as_default():
         for name, value in scalars.items():
             tf.summary.scalar(name, value, step=step)
@@ -232,15 +254,29 @@ def get_indices_of_closest_vectors(elements: tf.Tensor,
     return tf.argmin(squared_distances, axis=1)
 
 
-def train_model(model,
-                train_dataset,
-                test_dataset,
-                num_epochs,
-                batch_size,
-                learning_rate,
-                latent_dim,
-                model_dir,
-                check_pt_every_n_epochs=None):
+def train_model(model: autoencoder.VariationalAutoEncoder,
+                train_dataset: tf.data.Dataset,
+                test_dataset: tf.data.Dataset,
+                num_epochs: int,
+                batch_size: int,
+                learning_rate: float,
+                latent_dim: int,
+                model_dir: pathlib.Path,
+                check_pt_every_n_epochs: Optional[int] = None):
+    """Run training.
+
+    Args:
+        model: model to train.
+        train_dataset: dataset to train on.
+        test_dataset: dataset to use for evaluation.
+        num_epochs: number of epochs to train.
+        batch_size: batch size to use for training.
+        learning_rate: learning rate to use for training.
+        latent_dim: dimension of the latent dimension of the VAE model.
+        model_dir: directory to export events and images to.
+        check_pt_every_n_epochs: create checkpoint every n epochs. If None, no
+            checkpoints will be created. Defaults to None.
+    """
     model_dir = pathlib.Path(model_dir)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
@@ -383,8 +419,8 @@ def run() -> None:
     set_up_logging(parsed_args.verbose)
     train_dataset, test_dataset, input_shape = fetch_datasets(
         parsed_args.dataset)
-    model = build_model(latent_dim=parsed_args.latent_dim,
-                        input_shape=input_shape)
+    model = build_default_model(latent_dim=parsed_args.latent_dim,
+                                input_shape=input_shape)
 
     train_model(model=model,
                 train_dataset=train_dataset,
