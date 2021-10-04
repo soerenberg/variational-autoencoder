@@ -31,17 +31,17 @@ class Encoder(tf.keras.Model):
         self._input_shape = input_shape
         self._latent_dim = latent_dim
         self._config = config
-        self._shape_before_flattening: tf.TensorShape
+        self._unflattened_conv_shape: tf.TensorShape
 
         inputs = tf.keras.layers.Input(self._input_shape, name="encoder_input")
-        outputs, self._shape_before_flattening = self.build_outputs(inputs)
+        outputs, self._unflattened_conv_shape = self.build_outputs(inputs)
 
         super().__init__(inputs, outputs, name="encoder", *args, **kwargs)
 
     @property
-    def shape_before_flattening(self) -> tf.TensorShape:
+    def unflattened_conv_shape(self) -> tf.TensorShape:
         """Return tensor shape before the final flattening op is applied."""
-        return self._shape_before_flattening
+        return self._unflattened_conv_shape
 
     def build_outputs(self,
                       tensor: tf.Tensor) -> Tuple[tf.Tensor, tf.TensorShape]:
@@ -56,13 +56,13 @@ class Encoder(tf.keras.Model):
             tensor = tf.keras.layers.LeakyReLU()(tensor)
             tensor = tf.keras.layers.Dropout(rate=.25)(tensor)
 
-        shape_before_flattening = tensor.shape[1:]
+        unflattened_conv_shape = tensor.shape[1:]
         tensor = tf.keras.layers.Flatten()(tensor)
 
         outputs = tf.keras.layers.Dense(self._latent_dim +
                                         self._latent_dim)(tensor)
 
-        return outputs, shape_before_flattening
+        return outputs, unflattened_conv_shape
 
 
 class DecoderConfig(NamedTuple):
@@ -145,7 +145,7 @@ class VariationalAutoEncoder(keras.Model):
                               EncoderConfig(64, 3, 2),
                               EncoderConfig(64, 3, 1)
                           ])
-        decoder = Decoder(input_shape=encoder.shape_before_flattening,
+        decoder = Decoder(input_shape=encoder.unflattened_conv_shape,
                           latent_dim=latent_dim,
                           config=[
                               DecoderConfig(64, 3, 1),

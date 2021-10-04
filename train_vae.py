@@ -28,7 +28,7 @@ def build_model(
                                       autoencoder.EncoderConfig(64, 3, 2),
                                       autoencoder.EncoderConfig(64, 3, 1)
                                   ])
-    decoder = autoencoder.Decoder(input_shape=encoder.shape_before_flattening,
+    decoder = autoencoder.Decoder(input_shape=encoder.unflattened_conv_shape,
                                   latent_dim=latent_dim,
                                   config=[
                                       autoencoder.DecoderConfig(64, 3, 1),
