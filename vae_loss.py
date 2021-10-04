@@ -28,8 +28,8 @@ def compute_loss(model, tensor_batch: tf.Tensor) -> tf.Tensor:
     Args:
         model: VAE model
         tensor_batch: batch of training data points, e.g. for 3 channel
-            pictures of size 28 x 28 this tensor will have the shape
-                (batch_size, 28, 28, 3).
+            pictures of size (height, width) this tensor will have the shape
+                (batch_size, height, width, 3).
 
     Returns:
         tf.Tensor: a scalar tensor equal to the loss of the given batch
@@ -41,10 +41,10 @@ def compute_loss(model, tensor_batch: tf.Tensor) -> tf.Tensor:
     # add random noise
     latent_z = model.sample_from_latent_conditional(mean, log_var)
 
-    # Note: x_logit has shape (batch, 28, 28, x)
+    # Note: x_logit has shape (batch, height, width, x)
     x_logit = model.decode(latent_z)  # Note: the decoder returns logits.
 
-    # Note: cross_ent has shape (batch, 28, 28, x)
+    # Note: cross_ent has shape (batch, height, width, x)
     cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit,
                                                         labels=tensor_batch)
     # Note: summed_cross_ent has shape (batch,)
