@@ -1,3 +1,4 @@
+![CI Tests](https://github.com/soerenberg/variational-autoencoder/actions/workflows/ci_tests.yml/badge.svg)
 [![Build Status](https://app.travis-ci.com/soerenberg/variational-autoencoder.svg?token=hpcdeWX5ho5Gtj7Nsa3k&branch=main)](https://app.travis-ci.com/soerenberg/variational-autoencoder)
 [![codecov](https://codecov.io/gh/soerenberg/variational-autoencoder/branch/main/graph/badge.svg?token=0NPJ3SKUTK)](https://codecov.io/gh/soerenberg/variational-autoencoder)
 
